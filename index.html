@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  body {
+    background-color: #000;
+    color: white;
+    font-family: 'Segoe UI', Sans-Serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 50px;
+  } 
+  h1 {
+    color: yellow;
+    text-align: center;
+  } 
+  h6 {
+    color: gray;
+    font-style: italic;
+    margin-top: -10px;
+  } 
+  input {
+    border: 1px solid yellow;
+    padding: 12px 28px;
+    border-radius: 8px;
+    text-align: center;
+    width: 300px;
+    background: #111;
+    color: white;
+    outline: none;
+  }
+  #response {
+    margin-top: 20px;
+    max-width: 600px;
+    color: #ddd;
+    line-height: 1.6;
+    text-align: center;
+    padding: 20px;
+  }
+  .loading { color: yellow; font-style: italic; }
+</style>
+</head>
+<body>
+
+  <h1>Physics Theory Generator</h1>
+  <h6>always making your theories...</h6> 
+  
+  <input id="theoryInput" placeholder="Send a message for teacher..."> 
+
+  <div id="response">Aguardando sua teoria...</div>
+
+  <script>
+    // Recupera a chave do armazenamento do navegador
+    let API_KEY = localStorage.getItem("pollinations_key");
+    const inputField = document.getElementById('theoryInput');
+    const responseDiv = document.getElementById('response');
+
+    inputField.addEventListener('keypress', async function(event) {
+      if (event.key === 'Enter') {
+        const promptUser = inputField.value.trim();
+        if (!promptUser) return;
+
+        if (!API_KEY) {
+            API_KEY = prompt("Insira sua API Key do Pollinations.ai:");
+            if (API_KEY) {
+                localStorage.setItem("pollinations_key", API_KEY);
+            } else {
+                alert("A chave é necessária para gerar a teoria!");
+                return;
+            }
+        }
+
+    
+        responseDiv.innerHTML = '<span class="loading">Generating theory...</span>';
+        inputField.value = ""; 
+
+        try {
+            const systemPrompt = "Você é um professor de física avançada. O usuário enviará ideias sobre teorias e você deve desenvolvê-las cientificamente em português.";
+            
+            const response = await fetch("https://text.pollinations.ai/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${API_KEY}`
+                },
+                body: JSON.stringify({
+                    messages: [
+                        { role: "system", content: systemPrompt },
+                        { role: "user", content: promptUser }
+                    ],
+                    model: "openai"
+                })
+            });
+
+            if (!response.ok) throw new Error("Erro na chave ou conexão");
+
+            const text = await response.text();
+            
+            // 4. Exibe a resposta
+            responseDiv.innerHTML = `<strong>Resposta:</strong><br>${text.replace(/\n/g, "<br>")}`;
+
+        } catch (error) {
+            responseDiv.innerHTML = "Erro ao conectar. Tente resetar sua chave.";
+            console.error(error);
+        }
+      }
+    });
+
+    function resetKey() {
+        localStorage.removeItem("pollinations_key");
+        alert("Chave resetada!");
+        location.reload();
+    }
+  </script>
+</body>
+</html>
